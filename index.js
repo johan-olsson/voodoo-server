@@ -1,7 +1,7 @@
 'use strict'
 
 const Redisemitter = require('redisemitter')
-const Objectstream = require('objectstream')
+const Objectstream = require('objectstreamer')
 const Messageparser = require('message-parser')
 const kue = require('kue')
 
