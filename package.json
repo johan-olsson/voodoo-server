@@ -1,0 +1,27 @@
+{
+  "name": "voodoo-server",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc --reporter=html --reporter=text mocha test; echo coverage/index.html",
+    "test:watch": "nyc --reporter=html --reporter=text mocha --watch test; echo coverage/index.html"
+  },
+  "author": "Johan Olsson",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "engine.io": "^2.0.1",
+    "express": "^4.14.0",
+    "kue": "^0.11.5",
+    "message-parser": "github:johan-olsson/message-parser",
+    "objectstreamer": "^1.0.0",
+    "redisemitter": "0.0.2"
+  },
+  "devDependencies": {
+    "axios": "^0.15.3",
+    "mocha": "^3.2.0",
+    "nyc": "^10.1.2",
+    "uuid": "^3.0.1"
+  }
+}
