@@ -6,7 +6,7 @@ module.exports = function(options = {}) {
 
   return (createClient) => {
 
-    var server = net.createServer(options, (socket) => {
+    var server = net.createServer((socket) => {
 
       createClient((instream, outstream) => {
         outstream.read((data) => {
@@ -27,7 +27,7 @@ module.exports = function(options = {}) {
       })
     })
 
-    server.listen(port)
+    server.listen(options)
     return () => {
       server.close()
     }
