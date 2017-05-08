@@ -7,13 +7,14 @@ module.exports = (instream, outstream, redisemitter) => {
   instream.filter(data =>
       data.type === 'event' &&
       data.action === 'subscribe')
-    .read((data) => {
+    .subscribe((data) => {
 
       disposers[data.name] = redisemitter.on({
         type: 'event',
         action: 'emit',
         name: data.name
       }, (event) => {
+
         outstream.write(Object.assign({}, event, {
           id: data.id
         }))
@@ -23,7 +24,7 @@ module.exports = (instream, outstream, redisemitter) => {
   instream.filter(data =>
       data.type === 'event' &&
       data.action === 'unsubscribe')
-    .read((data) => {
+    .subscribe((data) => {
       if (disposers[data.name]) disposers[data.name]()
     })
 }

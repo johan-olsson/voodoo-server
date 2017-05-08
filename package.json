@@ -1,7 +1,7 @@
 {
   "name": "voodoo-server",
-  "version": "0.0.3",
-  "description": "",
+  "version": "0.0.4",
+  "description": "Think if it as a victim of voodoo magic who tell redis about everything that happens, that also keep a diary",
   "main": "index.js",
   "scripts": {
     "test": "nyc --reporter=html --reporter=text mocha test; echo coverage/index.html",
@@ -14,9 +14,9 @@
     "engine.io": "^2.0.1",
     "express": "^4.14.0",
     "kue": "^0.11.5",
-    "message-parser": "github:johan-olsson/message-parser",
     "objectstreamer": "^1.0.0",
-    "redisemitter": "0.0.2"
+    "redisemitter": "0.0.2",
+    "rxjs": "^5.3.0"
   },
   "devDependencies": {
     "axios": "^0.15.3",

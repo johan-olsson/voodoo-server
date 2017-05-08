@@ -3,13 +3,16 @@
 const net = require('net')
 
 module.exports = function(options = {}) {
+  console.log('Starting TCP Server...')
 
   return (createClient) => {
 
     var server = net.createServer((socket) => {
 
-      createClient((instream, outstream) => {
-        outstream.read((data) => {
+      createClient((instream, outstream, close) => {
+        console.log('New TCP client connected!')
+
+        outstream.subscribe((data) => {
           socket.write(data + '·')
         })
 
@@ -17,17 +20,16 @@ module.exports = function(options = {}) {
           data.toString('utf8')
             .split('·')
             .forEach((data) => {
-              instream.write(data)
+              outstream.next(data)
             })
         })
-
-        return () => {
-          socket.end()
-        }
+        socket.on('end', close)
       })
     })
 
-    server.listen(options)
+    server.listen(options, () => {
+      console.log('TCP Server started with options', options)
+    })
     return () => {
       server.close()
     }

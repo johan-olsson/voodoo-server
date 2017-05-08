@@ -1,16 +1,19 @@
 'use strict'
 
+var scribe = require('scribe-js')()
+
 const Redisemitter = require('redisemitter')
 const Objectstream = require('objectstreamer')
-const Messageparser = require('message-parser')
+const jwt = require('jsonwebtoken')
 const kue = require('kue')
+const Rx = require('rxjs')
 
 const uuid = require('uuid').v4
 
-const Httpserver = require('./src/login')
+const HttpServer = require('./src/login')
 
-const make = require('./src/rpc/make')
-const provide = require('./src/rpc/provide')
+const run = require('./src/rpc/run')
+const define = require('./src/rpc/define')
 
 const emit = require('./src/event/emit')
 const subscribe = require('./src/event/subscribe')
@@ -22,7 +25,7 @@ module.exports = class Server {
 
     this.options = Object.assign({
       http: {
-        port: 80
+        port: 5353
       },
       redis: {
         port: 6379,
@@ -36,9 +39,9 @@ module.exports = class Server {
     this.kue = kue.createQueue({
       redis: this.options.redis
     })
+    this.kue.watchStuckJobs(1000)
 
-    this._parser = new Messageparser(this.options)
-    this._httpserver = new Httpserver(this)
+    this._httpServer = new HttpServer(this, scribe)
     this._authenticationHandler = (creds, next) => {
       next(null, {
         type: 'guest'
@@ -47,7 +50,7 @@ module.exports = class Server {
   }
 
   close() {
-    this._httpserver.close()
+    this._httpServer.close()
   }
 
   authentication(handler) {
@@ -58,25 +61,26 @@ module.exports = class Server {
 
     handleTransport((clientConstuctor) => {
 
-      const outstream = new Objectstream()
-      const instream = new Objectstream()
+      const outstream = new Rx.Subject()
+      const instream = new Rx.Subject()
 
       const refinedstream = instream
         .map((data) => (data instanceof Buffer) ? data.toString() : data)
         .map((data) => (typeof data === 'string') ? JSON.parse(data) : data)
-        .map((data, next) => {
-          this._parser.decode(data.token)
-            .then((user) => {
+        .map((data) => {
+          return new Promise((resolve, reject) => {
+            jwt.verify(data.token, this.options.secret, (err, user) => {
+              if (err) return outstream.error(err);
+
               data.user = user
               delete data.token
 
-              next(data)
+              resolve(data)
             })
-            .catch((err) => {
-              outstream.error(err)
-            })
+          })
         })
         .filter((data) => {
+          console.log(data)
           if (!data.action) return refinedstream.error('Expected param `action` in data')
           if (!data.type) return refinedstream.error('Expected param `type` in data')
           if (!data.name) return refinedstream.error('Expected param `name` in data')
@@ -88,11 +92,14 @@ module.exports = class Server {
       emit(refinedstream, outstream, this.redisemitter)
       subscribe(refinedstream, outstream, this.redisemitter)
 
-      make(refinedstream, outstream, this.redisemitter, this.kue)
-      provide(refinedstream, outstream, this.redisemitter, this.kue)
+      run(refinedstream, outstream, this.redisemitter, this.kue)
+      define(refinedstream, outstream, this.redisemitter, this.kue)
 
       clientConstuctor(instream, outstream
-        .map((data) => JSON.stringify(data)))
+        .map((data) => JSON.stringify(data)), () => {
+          instream.dispose()
+          outstream.dispose()
+        })
     })
   }
 }

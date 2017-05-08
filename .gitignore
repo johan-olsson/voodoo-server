@@ -1,4 +1,6 @@
 node_modules
+rethinkdb_data
 coverage
 .nyc_output
 test.js
+logs

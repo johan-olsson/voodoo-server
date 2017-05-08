@@ -27,15 +27,15 @@ describe('event', () => {
 
       connection((instream, outstream) => {
 
-        outstream.read((data) => {
+        outstream.subscribe((data) => {
           assert.equal(data.type, 'event')
           assert.equal(data.action, 'emit')
           assert.equal(data.name, 'event-name')
-          assert.equal(data.payload, 'payload node')
+          assert.equal(data.data, 'data node')
           done()
         })
 
-        instream.write({
+        instream.next({
           id: uuid(),
           type: 'event',
           action: 'subscribe',
@@ -43,12 +43,12 @@ describe('event', () => {
           token: token
         })
         setTimeout(() => {
-          instream.write({
+          instream.next({
             id: uuid(),
             type: 'event',
             action: 'emit',
             name: 'event-name',
-            payload: 'payload node',
+            data: 'data node',
             token: token
           })
         }, 10)
@@ -81,15 +81,15 @@ describe('rpc', () => {
         outstream
           .filter((data) => {
             return data.type === 'rpc' &&
-              data.action === 'make'
+              data.action === 'run'
           })
-          .read((data) => {
-            instream.write({
+          .subscribe((data) => {
+            outstream.next({
               id: data.id,
               type: 'rpc',
               action: 'response',
               name: 'rpc-name',
-              payload: 'payload node',
+              data: 'data node',
               token: token
             })
           })
@@ -99,30 +99,30 @@ describe('rpc', () => {
             return data.type === 'rpc' &&
               data.action === 'response'
           })
-          .read((data) => {
+          .subscribe((data) => {
             assert.equal(data.type, 'rpc')
             assert.equal(data.action, 'response')
             assert.equal(data.name, 'rpc-name')
-            assert.equal(data.payload, 'payload node')
+            assert.equal(data.data, 'data node')
             assert.equal(data.user.admin, true)
             assert.equal(data.user.name, 'Test User')
             done()
           })
 
-        instream.write({
+        outstream.next({
           id: uuid(),
           type: 'rpc',
-          action: 'provide',
+          action: 'define',
           name: 'rpc-name',
           token: token
         })
         setTimeout(() => {
-          instream.write({
+          outstream.next({
             id: uuid(),
             type: 'rpc',
-            action: 'make',
+            action: 'run',
             name: 'rpc-name',
-            payload: 'payload node',
+            data: 'data node',
             token: token
           })
         }, 10)

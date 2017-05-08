@@ -6,8 +6,7 @@ module.exports = (instream, outstream, redisemitter) => {
       return data.type === 'event' &&
         data.action === 'emit'
     })
-    .read((data) => {
-
+    .subscribe(data => {
       redisemitter.emit(data)
     })
 }

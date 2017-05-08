@@ -3,19 +3,22 @@
 const engine = require('engine.io')
 
 module.exports = function(port) {
+  console.log('Starting WebSocket Server...')
 
   return (createClient) => {
 
     var server = engine.listen(port)
+    console.log(`WebSocket Server started at port ${port}!`)
 
     server.on('connection', (socket) => {
+      console.log('New WebSocket client connected!')
 
-      createClient((writeStream, readStream) => {
+      createClient((instream, outstream) => {
         socket.on('data', (data) => {
-          writeStream.write(data)
+          outstream.next(data)
         })
 
-        readStream.read((data) => {
+        outstream.subscribe((data) => {
           socket.send(data)
         })
       })
